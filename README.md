@@ -430,6 +430,22 @@ quatro variáveis para os ambientes *Production*, *Preview* e *Development*:
 
 Clique em **Deploy** e aguarde o build.
 
+### 13.3.0. Se aparecer `No Output Directory named "public" found`
+
+A Vercel não reconheceu o projeto como Next.js e procurou um site estático. Corrija assim:
+
+1. **Settings → Build and Deployment → Framework Settings**: *Framework Preset* deve estar
+   como **Next.js** (não *Other*).
+2. No mesmo bloco, o campo **Output Directory** precisa estar **vazio** (com o override
+   desligado). Para Next.js a saída é `.next`, gerada automaticamente — nunca `public`.
+3. **Settings → Build and Deployment → Root Directory**: precisa apontar para a pasta que
+   contém o `package.json`. Se você subiu o `.zip` já descompactado dentro de uma subpasta
+   (ex.: `tropa-bets/`), informe essa subpasta aqui.
+4. **Redeploy**.
+
+O projeto já inclui um `vercel.json` fixando `"framework": "nextjs"`, o que evita esse
+problema em novas importações.
+
 ### 13.3.1. Se aparecer `No API key found in request`
 
 Esse JSON vem do Supabase e significa que a aplicação chamou a API **sem a anon key** — ou seja,
@@ -581,6 +597,8 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | "Acesso bloqueado: o app não concluiu a verificação" | Seu e-mail não está na lista de teste do Google | Adicione o e-mail em **Tela de permissão OAuth → Usuários de teste**, ou publique o app |
 | `Variável de ambiente ausente: ...` ao subir o projeto | Faltou o `.env.local` ou alguma variável | Refaça o [passo 8](#8-copiar-as-chaves-e-criar-o-envlocal) e reinicie o `npm run dev` |
 | `Cannot find module './supabase/public-env'` (ou outro caminho estranho) apontando para `./env.ts` | Existe um arquivo `.ts` solto **na raiz** do repositório — cópia colada fora de `src/` | Apague o arquivo da raiz; o correto é `src/lib/env.ts`. Rode `git ls-files '*.ts' | grep -v '^src/'` para achar sobras |
+| `No Output Directory named "public" found after the Build completed` | A Vercel está tratando o projeto como site estático | *Framework Preset* = **Next.js**, *Output Directory* vazio e *Root Directory* na pasta do `package.json` — veja a [seção 13.3.0](#1330-se-aparecer-no-output-directory-named-public-found) |
+| `404: NOT_FOUND` com `DEPLOYMENT_NOT_FOUND` | Erro da plataforma: a URL não aponta para nenhum deployment. Normalmente não existe deploy de produção bem-sucedido ainda | Em **Deployments**, confirme que há um deployment **Ready** e abra pelo botão **Visit**; confira o subdomínio atual em **Settings → Domains** (ele muda se o projeto foi recriado/renomeado) |
 | `{"message":"No API key found in request"}` | A anon key não entrou no build (faltando, com nome errado ou cadastrada depois do deploy) | Confira as variáveis na Vercel e faça **Redeploy** — veja a [seção 13.3.1](#1331-se-aparecer-no-api-key-found-in-request) |
 | Entrei e caí na tela "Cadastro em análise" | Você não foi o primeiro usuário | Peça aprovação ao admin ou rode o `update` da [seção 10](#10-primeiro-acesso-virar-administrador) |
 | `ERR_TOO_MANY_REDIRECTS` logo após o login | O usuário autenticado não tem registro em `profiles` (conta criada antes de o `schema.sql` rodar) | Reexecute o `supabase/schema.sql` — o passo 11 faz o *backfill* dos perfis faltantes. A aplicação também recria o perfil sozinha no próximo acesso, desde que `SUPABASE_SERVICE_ROLE_KEY` esteja configurada |

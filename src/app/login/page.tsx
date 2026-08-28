@@ -32,6 +32,7 @@ export default async function LoginPage({
   // Sessão válida sem perfil correspondente: mostramos a tela com um aviso e a
   // opção de sair, em vez de rebater o usuário entre /login e /dashboard.
   const orphanSession = Boolean(await authService.getUser());
+  const orphanReason = orphanSession ? authService.describeMissingProfile() : null;
 
   return (
     <div className="flex min-h-screen items-center justify-center p-5">
@@ -50,11 +51,10 @@ export default async function LoginPage({
 
           {error ? <Alert tone="error">{error}</Alert> : null}
 
-          {orphanSession ? (
+          {orphanReason ? (
             <Alert tone="error">
-              Você está autenticado, mas não foi possível carregar seu perfil. Peça ao
-              administrador para conferir se o script <code>supabase/schema.sql</code> foi
-              executado, ou saia e entre novamente.
+              <p className="font-semibold">Não foi possível carregar seu perfil.</p>
+              <p className="mt-1">{orphanReason}</p>
             </Alert>
           ) : null}
 

@@ -115,6 +115,21 @@ export const authService = {
     return restored ? { user, profile: restored } : null;
   },
 
+  /**
+   * Explica por que um usuário autenticado ficou sem perfil, para exibir na
+   * tela de login. Sem a service role a aplicação não consegue se auto-reparar.
+   */
+  describeMissingProfile(): string {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+      return 'A variável SUPABASE_SERVICE_ROLE_KEY não está configurada neste ambiente, ' +
+        'então a aplicação não consegue recriar seu perfil sozinha. Cadastre-a na Vercel ' +
+        '(Settings > Environment Variables) e faça um novo deploy.';
+    }
+    return 'Peça ao administrador para executar o script supabase/schema.sql no projeto ' +
+      'Supabase — o passo 11 recria os perfis que estejam faltando. Os detalhes do erro ' +
+      'aparecem nos logs do servidor com o prefixo [auth].';
+  },
+
   /** Exige login. */
   async requireContext(): Promise<SessionContext> {
     const ctx = await this.getContext();
