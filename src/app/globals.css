@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  @apply bg-ink-950 font-sans text-zinc-100 antialiased;
+}
+
+/* Fundo com brilho sutil no canto superior esquerdo (identidade visual). */
+body {
+  background-image:
+    radial-gradient(900px 420px at 8% -10%, rgba(200, 245, 66, 0.10), transparent 60%),
+    radial-gradient(700px 380px at 100% 0%, rgba(200, 245, 66, 0.04), transparent 55%);
+  background-attachment: fixed;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-white/5 bg-ink-850/80 p-5 shadow-card backdrop-blur;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-400;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-ink-900 px-3.5 py-2.5 text-sm text-zinc-100
+           placeholder:text-zinc-500 outline-none transition
+           focus:border-lime/60 focus:ring-2 focus:ring-lime/20;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+           transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-lime text-ink-950 hover:bg-lime-soft;
+  }
+
+  .btn-ghost {
+    @apply btn border border-white/10 bg-white/[0.03] text-zinc-200 hover:bg-white/[0.07];
+  }
+
+  .btn-danger {
+    @apply btn border border-red-500/30 bg-red-500/10 text-red-300 hover:bg-red-500/20;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+
+  .th {
+    @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500;
+  }
+
+  .td {
+    @apply px-4 py-3.5 text-sm text-zinc-200;
+  }
+}
