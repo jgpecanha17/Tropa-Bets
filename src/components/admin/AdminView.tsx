@@ -2,30 +2,39 @@
 
 import { useState } from 'react';
 import { AccessRequests } from './AccessRequests';
+import { AllTransactions } from './AllTransactions';
 import { BookmakerSettings } from './BookmakerSettings';
+import { CommissionsManager } from './CommissionsManager';
+import { ReceiptQueue } from './ReceiptQueue';
 import { UsersManager } from './UsersManager';
 import { cn } from '@/lib/format';
-import type { Bookmaker, Profile } from '@/models';
+import type { AdminTransaction, Bookmaker, Profile } from '@/models';
 
-type TabKey = 'requests' | 'users' | 'bookmakers';
+type TabKey = 'overview' | 'receipts' | 'commissions' | 'requests' | 'users' | 'bookmakers';
 
 /** VIEW (admin) — Painel administrativo organizado em abas. */
 export function AdminView({
   profile,
   users,
   bookmakers,
+  transactions,
 }: {
   profile: Profile;
   users: Profile[];
   bookmakers: Bookmaker[];
+  transactions: AdminTransaction[];
 }) {
-  const [tab, setTab] = useState<TabKey>('requests');
+  const [tab, setTab] = useState<TabKey>('overview');
   const pending = users.filter((user) => user.status === 'pending_approval');
+  const pendingReceipts = transactions.filter((tx) => tx.receipt_status === 'pending');
 
   const tabs: Array<{ key: TabKey; label: string; badge?: number }> = [
+    { key: 'overview', label: 'Visão geral', badge: transactions.length },
+    { key: 'receipts', label: 'Comprovantes', badge: pendingReceipts.length },
+    { key: 'commissions', label: 'Comissões', badge: users.filter((u) => u.status === 'approved').length },
     { key: 'requests', label: 'Solicitações de acesso', badge: pending.length },
     { key: 'users', label: 'Gerenciamento de usuários', badge: users.length },
-    { key: 'bookmakers', label: 'Configurações & links das casas', badge: bookmakers.length },
+    { key: 'bookmakers', label: 'Casas & links', badge: bookmakers.length },
   ];
 
   return (
@@ -33,7 +42,8 @@ export function AdminView({
       <header className="card">
         <h1 className="text-xl font-bold text-zinc-50">Administração</h1>
         <p className="text-sm text-zinc-400">
-          Aprove novos membros, ajuste permissões e mantenha os links das casas atualizados.
+          Analise comprovantes, lance comissões, aprove novos membros e mantenha os links das
+          casas atualizados.
         </p>
       </header>
 
@@ -65,6 +75,13 @@ export function AdminView({
         ))}
       </nav>
 
+      {tab === 'overview' ? (
+        <AllTransactions users={users} bookmakers={bookmakers} transactions={transactions} />
+      ) : null}
+      {tab === 'receipts' ? <ReceiptQueue transactions={transactions} /> : null}
+      {tab === 'commissions' ? (
+        <CommissionsManager users={users} transactions={transactions} />
+      ) : null}
       {tab === 'requests' ? <AccessRequests pending={pending} /> : null}
       {tab === 'users' ? <UsersManager users={users} currentUserId={profile.id} /> : null}
       {tab === 'bookmakers' ? <BookmakerSettings bookmakers={bookmakers} /> : null}

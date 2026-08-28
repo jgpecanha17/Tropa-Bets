@@ -32,7 +32,7 @@ export const dashboardController = {
     return { profile: ctx.profile, bookmakers, transactions };
   },
 
-  /** Dados do painel administrativo. */
+  /** Dados do painel administrativo (usuários, casas e todas as movimentações). */
   async admin() {
     const ctx = await authService.getContext();
     if (!ctx) redirect('/login');
@@ -40,11 +40,12 @@ export const dashboardController = {
     if (!ProfileRules.isApproved(ctx.profile)) redirect('/pending');
     if (!ProfileRules.isAdmin(ctx.profile)) redirect('/dashboard');
 
-    const [users, bookmakers] = await Promise.all([
+    const [users, bookmakers, transactions] = await Promise.all([
       profileService.listAll(),
       bookmakerService.listAll(),
+      transactionService.listAll(),
     ]);
 
-    return { profile: ctx.profile, users, bookmakers };
+    return { profile: ctx.profile, users, bookmakers, transactions };
   },
 };

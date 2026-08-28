@@ -60,12 +60,13 @@ export function TransactionTable({ transactions }: { transactions: TransactionWi
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
       <div className="card overflow-x-auto p-0">
-        <table className="w-full min-w-[720px] border-collapse">
+        <table className="w-full min-w-[820px] border-collapse">
           <thead className="border-b border-white/5">
             <tr>
               <th className="th">Data</th>
               <th className="th">Tipo</th>
               <th className="th">Valor</th>
+              <th className="th">Comissão</th>
               <th className="th">Comprovante</th>
               <th className="th">Observação</th>
               <th className="th text-right">Ações</th>
@@ -88,6 +89,15 @@ export function TransactionTable({ transactions }: { transactions: TransactionWi
                 </td>
                 <td className="td whitespace-nowrap font-semibold">
                   {tx.type === 'deposit' ? '-' : '+'} {formatCurrency(Number(tx.amount))}
+                </td>
+                <td className="td whitespace-nowrap">
+                  {Number(tx.commission_amount) > 0 ? (
+                    <span className="font-semibold text-lime" title={tx.commission_note ?? undefined}>
+                      {formatCurrency(Number(tx.commission_amount))}
+                    </span>
+                  ) : (
+                    <span className="text-zinc-600">—</span>
+                  )}
                 </td>
                 <td className="td">
                   <ReceiptBadge status={tx.receipt_status} hasReceipt={Boolean(tx.receipt_path)} />

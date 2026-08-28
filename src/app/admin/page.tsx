@@ -7,11 +7,16 @@ export const dynamic = 'force-dynamic';
 
 /** Página restrita a admins (o controller redireciona quem não tem permissão). */
 export default async function AdminPage() {
-  const { profile, users, bookmakers } = await dashboardController.admin();
+  const { profile, users, bookmakers, transactions } = await dashboardController.admin();
 
   return (
     <AppShell profile={profile} active="/admin">
-      <AdminView profile={profile} users={users} bookmakers={bookmakers} />
+      <AdminView
+        profile={profile}
+        users={users}
+        bookmakers={bookmakers}
+        transactions={transactions}
+      />
     </AppShell>
   );
 }

@@ -76,6 +76,11 @@ create table if not exists public.transactions (
   receipt_path  text,
   receipt_status public.receipt_status not null default 'pending',
   notes         text,
+  -- Comissão lançada manualmente pelo administrador ao revisar o comprovante.
+  commission_amount numeric(12, 2) not null default 0 check (commission_amount >= 0),
+  commission_note   text,
+  reviewed_at   timestamptz,
+  reviewed_by   uuid references public.profiles (id) on delete set null,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
@@ -85,6 +90,7 @@ comment on table public.transactions is 'Movimentações financeiras do usuário
 create index if not exists transactions_user_idx      on public.transactions (user_id);
 create index if not exists transactions_bookmaker_idx on public.transactions (bookmaker_id);
 create index if not exists transactions_date_idx      on public.transactions (occurred_at desc);
+create index if not exists transactions_receipt_status_idx on public.transactions (receipt_status);
 
 -- ---------------------------------------------------------------------------
 -- 5. TRIGGERS utilitários (updated_at)
@@ -113,6 +119,35 @@ drop trigger if exists transactions_set_updated_at on public.transactions;
 create trigger transactions_set_updated_at
   before update on public.transactions
   for each row execute function public.set_updated_at();
+
+-- ---------------------------------------------------------------------------
+-- 5.1. TRIGGER: só administrador altera comissão e status do comprovante
+-- ---------------------------------------------------------------------------
+create or replace function public.guard_transaction_admin_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- auth.uid() nulo = chamada com service role (servidor da aplicação), já autorizada.
+  if auth.uid() is not null and not public.is_admin() then
+    if new.commission_amount is distinct from old.commission_amount
+       or new.commission_note   is distinct from old.commission_note
+       or new.receipt_status    is distinct from old.receipt_status
+       or new.reviewed_at       is distinct from old.reviewed_at
+       or new.reviewed_by       is distinct from old.reviewed_by then
+      raise exception 'Apenas administradores podem alterar a comissão ou o status do comprovante.';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists transactions_guard_admin_fields on public.transactions;
+create trigger transactions_guard_admin_fields
+  before update on public.transactions
+  for each row execute function public.guard_transaction_admin_fields();
 
 -- ---------------------------------------------------------------------------
 -- 6. TRIGGER: novo usuário -> cria profile pendente de aprovação
@@ -181,6 +216,27 @@ as $$
     where p.id = auth.uid() and p.status = 'approved'
   );
 $$;
+
+-- ---------------------------------------------------------------------------
+-- 7.1. GRANTS — sem eles a API responde "permission denied for table ...",
+--      mesmo com as políticas de RLS corretas.
+-- ---------------------------------------------------------------------------
+grant usage on schema public to anon, authenticated, service_role;
+
+grant all privileges on all tables    in schema public to service_role;
+grant all privileges on all sequences in schema public to service_role;
+
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant usage, select on all sequences in schema public to authenticated;
+
+grant select on all tables in schema public to anon;
+
+grant execute on all functions in schema public to anon, authenticated, service_role;
+
+alter default privileges in schema public grant all on tables to service_role;
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public grant select on tables to anon;
 
 -- ---------------------------------------------------------------------------
 -- 8. ROW LEVEL SECURITY

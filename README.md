@@ -127,6 +127,12 @@ comprovantes e o cadastro das 7 casas de aposta.
 
 > O script é **idempotente**: pode ser executado novamente sem apagar dados nem duplicar as casas.
 
+> **Já tinha o banco criado antes das telas de comprovantes e comissões?**
+> Rode `supabase/migration-comissoes.sql`: ele acrescenta as colunas `commission_amount`,
+> `commission_note`, `reviewed_at` e `reviewed_by` e o trigger que impede o usuário comum de
+> alterar a própria comissão ou o status do comprovante. Reexecutar o `schema.sql` inteiro
+> também resolve.
+
 ---
 
 ## 5. Criar as credenciais OAuth no Google Cloud
@@ -340,21 +346,46 @@ A aplicação também recria o perfil automaticamente no acesso seguinte, desde 
 
 ## 11. Usando o painel administrativo
 
-Acesse **/admin** (ou clique em *Administração* no menu). A página tem três abas:
+Acesse **/admin** (ou clique em *Administração* no menu). A página tem seis abas.
 
-### Aba 1 — Solicitações de acesso
+### Aba 1 — Visão geral
+Todas as movimentações de **todos os usuários** em uma tabela só.
+- Filtros por **usuário**, **casa**, **status do comprovante** e **tipo** (depósito/saque).
+- Cards com os totais do recorte filtrado: depositado, sacado, comissões e quantos
+  comprovantes estão em análise.
+- Botão **Revisar** em cada linha abre, ali mesmo, as ações de aprovar/recusar o comprovante
+  e o campo de comissão.
+
+### Aba 2 — Comprovantes
+Fila de análise, começando pelos que estão **em análise** (dá para alternar para validados,
+recusados ou todos).
+- Cada cartão traz foto e nome de quem enviou, casa, data, tipo, valor e a observação.
+- **Ver comprovante** abre o arquivo por um link temporário de 10 minutos.
+- **Aprovar**, **Recusar** ou **Voltar para análise** mudam o status; o sistema registra qual
+  administrador revisou e quando.
+- No mesmo cartão dá para lançar a **comissão** daquela movimentação.
+
+### Aba 3 — Comissões
+Consolidado **por usuário**, ordenado pela comissão acumulada.
+- Cada linha mostra o total de comissão, quanto a pessoa depositou, quantas movimentações
+  tem e quantas estão em análise.
+- Ao abrir um usuário, aparecem todas as movimentações dele com o campo **Comissão (R$)** e
+  uma observação opcional. O valor é **digitado à mão** — não há taxa nem cálculo automático.
+- No topo, a soma das comissões de toda a tropa.
+
+### Aba 4 — Solicitações de acesso
 Lista cada usuário pendente com **foto, nome, e-mail e data da solicitação**.
 - **Aprovar** → status vira `approved`; a pessoa passa a ver o dashboard no próximo carregamento.
 - **Recusar** → status vira `rejected`; a pessoa vê a tela "Acesso não liberado".
 
-### Aba 2 — Gerenciamento de usuários
+### Aba 5 — Gerenciamento de usuários
 Tabela com todos os usuários, status atual e data de entrada.
 - Menu de **Permissão** para alternar entre `Usuário` e `Administrador`.
 - Botões **Aprovar** / **Bloquear** para mudar o status a qualquer momento.
 - Proteções: você **não** pode alterar o próprio status/permissão e o sistema nunca fica
   sem ao menos um administrador ativo.
 
-### Aba 3 — Configurações & links das casas
+### Aba 6 — Casas & links
 Para cada uma das 7 casas:
 - Campo **Link de indicação / cadastro** → cole a URL de afiliado e clique em **Salvar**.
   Esse link vira o botão que os usuários veem no topo da aba daquela casa.
@@ -382,7 +413,10 @@ Em **/dashboard**:
    - **Observação** (opcional, até 280 caracteres).
 
    Clique em **Registrar movimentação**.
-5. **Histórico** — tabela com data, tipo, valor, status do comprovante e observação.
+5. **Histórico** — tabela com data, tipo, valor, **comissão**, status do comprovante e
+   observação. A comissão é lançada pelo administrador; enquanto não houver, aparece `—`.
+   O cabeçalho da página mostra a comissão acumulada em todas as casas e os cards trazem o
+   total daquela casa.
    - **Ver** → abre o comprovante em nova aba por meio de um link temporário (10 minutos).
    - **Excluir** → remove o lançamento e o arquivo do comprovante (pede confirmação).
 
@@ -527,6 +561,8 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `POST` | `/api/transactions` | Cria movimentação (multipart, com comprovante) |
 | `DELETE` | `/api/transactions/:id` | Exclui a movimentação e o comprovante |
 | `GET` | `/api/transactions/:id/receipt` | Devolve URL assinada do comprovante |
+| `GET` | `/api/admin/transactions` | Lista tudo de todos (`?userId=&bookmakerId=&receiptStatus=`) |
+| `PATCH` | `/api/admin/transactions/:id` | Aprova/recusa o comprovante e lança a comissão |
 | `GET` | `/api/admin/users` | Lista usuários (`?status=pending_approval` filtra pendentes) |
 | `PATCH` | `/api/admin/users/:id` | Atualiza `status` e/ou `role` |
 | `GET` | `/api/admin/bookmakers` | Lista todas as casas |
@@ -570,6 +606,9 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `receipt_path` | text | caminho no bucket `receipts` |
 | `receipt_status` | `pending` \| `approved` \| `rejected` | status do comprovante |
 | `notes` | text | observação opcional |
+| `commission_amount` | numeric(12,2) | comissão em R$ lançada pelo admin (padrão 0) |
+| `commission_note` | text | observação da comissão |
+| `reviewed_at` / `reviewed_by` | timestamptz / uuid | quem analisou o comprovante e quando |
 
 ---
 
@@ -601,6 +640,7 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `404: NOT_FOUND` com `DEPLOYMENT_NOT_FOUND` | Erro da plataforma: a URL não aponta para nenhum deployment. Normalmente não existe deploy de produção bem-sucedido ainda | Em **Deployments**, confirme que há um deployment **Ready** e abra pelo botão **Visit**; confira o subdomínio atual em **Settings → Domains** (ele muda se o projeto foi recriado/renomeado) |
 | `{"message":"No API key found in request"}` | A anon key não entrou no build (faltando, com nome errado ou cadastrada depois do deploy) | Confira as variáveis na Vercel e faça **Redeploy** — veja a [seção 13.3.1](#1331-se-aparecer-no-api-key-found-in-request) |
 | Entrei e caí na tela "Cadastro em análise" | Você não foi o primeiro usuário | Peça aprovação ao admin ou rode o `update` da [seção 10](#10-primeiro-acesso-virar-administrador) |
+| `permission denied for table profiles` nos logs | As tabelas foram criadas sem os *grants* para `service_role`/`authenticated` | Rode `supabase/fix-admin.sql` (bloco 1) ou reexecute o `schema.sql`, que agora inclui os grants no passo 7.1 |
 | `ERR_TOO_MANY_REDIRECTS` logo após o login | O usuário autenticado não tem registro em `profiles` (conta criada antes de o `schema.sql` rodar) | Reexecute o `supabase/schema.sql` — o passo 11 faz o *backfill* dos perfis faltantes. A aplicação também recria o perfil sozinha no próximo acesso, desde que `SUPABASE_SERVICE_ROLE_KEY` esteja configurada |
 | Dashboard diz "Nenhuma casa de aposta ativa" | O seed não rodou ou as casas foram desativadas | Confira a tabela `bookmakers` no Table Editor; reexecute o `schema.sql` se estiver vazia |
 | Erro ao enviar comprovante | Arquivo maior que 5 MB ou formato não aceito | Use PNG, JPG, WEBP, HEIC ou PDF com até 5 MB |

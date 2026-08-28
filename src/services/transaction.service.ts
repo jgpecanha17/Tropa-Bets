@@ -1,10 +1,26 @@
 import { createServerSupabase } from '@/lib/supabase/server';
 import { AppError, NotFound } from '@/lib/errors';
-import type { CreateTransactionInput, Transaction, TransactionWithBookmaker } from '@/models';
+import type {
+  AdminTransaction,
+  CreateTransactionInput,
+  ReceiptStatus,
+  ReviewTransactionInput,
+  Transaction,
+  TransactionWithBookmaker,
+} from '@/models';
 import { bookmakerService } from './bookmaker.service';
 import { storageService } from './storage.service';
 
 const SELECT_WITH_BOOKMAKER = '*, bookmaker:bookmakers(id, name, slug)';
+const SELECT_FOR_ADMIN =
+  '*, bookmaker:bookmakers(id, name, slug), owner:profiles(id, full_name, email, avatar_url)';
+
+/** Filtros da visão geral do administrador. */
+export interface AdminTransactionFilters {
+  userId?: string;
+  bookmakerId?: string;
+  receiptStatus?: ReceiptStatus;
+}
 
 /** SERVICE — Regras de negocio das movimentações (depósitos e saques). */
 export const transactionService = {
@@ -73,6 +89,67 @@ export const transactionService = {
       throw new AppError(`Falha ao registrar movimentação: ${error.message}`, 500);
     }
     if (!data) throw new AppError('Movimentação não foi registrada.', 500);
+    return data as Transaction;
+  },
+
+  /**
+   * Todas as movimentações do sistema (somente administradores — a RLS
+   * garante o acesso). Aceita filtros por usuário, casa e status do comprovante.
+   */
+  async listAll(filters: AdminTransactionFilters = {}): Promise<AdminTransaction[]> {
+    const supabase = await createServerSupabase();
+    let query = supabase
+      .from('transactions')
+      .select(SELECT_FOR_ADMIN)
+      .order('occurred_at', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (filters.userId) query = query.eq('user_id', filters.userId);
+    if (filters.bookmakerId) query = query.eq('bookmaker_id', filters.bookmakerId);
+    if (filters.receiptStatus) query = query.eq('receipt_status', filters.receiptStatus);
+
+    const { data, error } = await query;
+    if (error) throw new AppError(`Falha ao carregar movimentações: ${error.message}`, 500);
+    return (data ?? []) as unknown as AdminTransaction[];
+  },
+
+  /**
+   * Revisão administrativa: aprova/recusa o comprovante e lança a comissão
+   * daquela movimentação. A comissão é sempre informada à mão pelo admin.
+   */
+  async review(
+    adminId: string,
+    transactionId: string,
+    input: ReviewTransactionInput,
+  ): Promise<Transaction> {
+    const patch: Partial<Transaction> = {};
+
+    if (input.receipt_status) {
+      patch.receipt_status = input.receipt_status;
+      patch.reviewed_at = input.receipt_status === 'pending' ? null : new Date().toISOString();
+      patch.reviewed_by = input.receipt_status === 'pending' ? null : adminId;
+    }
+    if (input.commission_amount !== undefined) {
+      patch.commission_amount = input.commission_amount;
+    }
+    if (input.commission_note !== undefined) {
+      patch.commission_note = input.commission_note.trim() ? input.commission_note.trim() : null;
+    }
+
+    if (Object.keys(patch).length === 0) {
+      throw new AppError('Nada para atualizar nesta movimentação.', 400);
+    }
+
+    const supabase = await createServerSupabase();
+    const { data, error } = await supabase
+      .from('transactions')
+      .update(patch)
+      .eq('id', transactionId)
+      .select('*')
+      .maybeSingle();
+
+    if (error) throw new AppError(`Falha ao revisar a movimentação: ${error.message}`, 500);
+    if (!data) throw NotFound('Movimentação não encontrada.');
     return data as Transaction;
   },
 

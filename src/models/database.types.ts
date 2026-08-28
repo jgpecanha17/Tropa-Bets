@@ -43,6 +43,10 @@ export type TransactionRow = {
   receipt_path: string | null;
   receipt_status: ReceiptStatus;
   notes: string | null;
+  commission_amount: number;
+  commission_note: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -82,6 +86,10 @@ export type TransactionInsert = {
   receipt_path?: string | null;
   receipt_status?: ReceiptStatus;
   notes?: string | null;
+  commission_amount?: number;
+  commission_note?: string | null;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
   created_at?: string;
   updated_at?: string;
 };
