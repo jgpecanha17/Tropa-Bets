@@ -12,8 +12,10 @@ import { bookmakerService } from './bookmaker.service';
 import { storageService } from './storage.service';
 
 const SELECT_WITH_BOOKMAKER = '*, bookmaker:bookmakers(id, name, slug)';
-const SELECT_FOR_ADMIN =
-  '*, bookmaker:bookmakers(id, name, slug), owner:profiles(id, full_name, email, avatar_url)';
+// O dono NÃO é buscado por embed: existem duas chaves estrangeiras de
+// transactions para profiles (user_id e reviewed_by) e o PostgREST recusa o
+// join por ambiguidade. Os perfis são carregados à parte e combinados aqui.
+const SELECT_FOR_ADMIN = '*, bookmaker:bookmakers(id, name, slug)';
 
 /** Filtros da visão geral do administrador. */
 export interface AdminTransactionFilters {
@@ -108,9 +110,19 @@ export const transactionService = {
     if (filters.bookmakerId) query = query.eq('bookmaker_id', filters.bookmakerId);
     if (filters.receiptStatus) query = query.eq('receipt_status', filters.receiptStatus);
 
-    const { data, error } = await query;
+    const [{ data, error }, { data: owners, error: ownersError }] = await Promise.all([
+      query,
+      supabase.from('profiles').select('id, full_name, email, avatar_url'),
+    ]);
+
     if (error) throw new AppError(`Falha ao carregar movimentações: ${error.message}`, 500);
-    return (data ?? []) as unknown as AdminTransaction[];
+    if (ownersError) throw new AppError(`Falha ao carregar usuários: ${ownersError.message}`, 500);
+
+    const byId = new Map((owners ?? []).map((owner) => [owner.id, owner]));
+    return ((data ?? []) as unknown as AdminTransaction[]).map((tx) => ({
+      ...tx,
+      owner: byId.get(tx.user_id) ?? null,
+    }));
   },
 
   /**

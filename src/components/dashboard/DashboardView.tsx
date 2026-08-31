@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { OperationGuidelines } from './OperationGuidelines';
 import { SummaryCards } from './SummaryCards';
 import { TransactionForm } from './TransactionForm';
 import { TransactionTable } from './TransactionTable';
@@ -50,7 +51,7 @@ export function DashboardView({
             Olá, {ProfileRules.displayName(profile)}
           </h1>
           <p className="text-sm text-zinc-400">
-            Resultado geral da tropa em todas as casas:{' '}
+            Resultado geral em todas as casas:{' '}
             <strong className={globalSummary.balance >= 0 ? 'text-lime' : 'text-red-300'}>
               {formatCurrency(globalSummary.balance)}
             </strong>{' '}
@@ -58,6 +59,8 @@ export function DashboardView({
           </p>
         </div>
       </header>
+
+      <OperationGuidelines />
 
       {/* Abas: uma por casa de aposta */}
       <nav className="flex gap-2 overflow-x-auto pb-1">

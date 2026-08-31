@@ -1,5 +1,5 @@
 -- ===========================================================================
---  TROPA BETS — Script de inicialização do Supabase
+--  PEÇANHA AFFILIATES — Script de inicialização do Supabase
 --  Execute no SQL Editor do projeto (Supabase > SQL Editor > New query).
 --  Idempotente: pode ser reexecutado com segurança.
 -- ===========================================================================

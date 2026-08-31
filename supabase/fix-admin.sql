@@ -1,5 +1,5 @@
 -- ===========================================================================
---  TROPA BETS — Correção de permissões + promoção de administradores
+--  PEÇANHA AFFILIATES — Correção de permissões + promoção de administradores
 --  Rode INTEIRO no Supabase > SQL Editor > New query > Run.
 --  Pode ser executado mais de uma vez sem problema.
 -- ===========================================================================

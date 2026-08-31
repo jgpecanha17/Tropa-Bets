@@ -61,7 +61,7 @@ export function ReceiptQueue({ transactions }: { transactions: AdminTransaction[
       {visible.length === 0 ? (
         <EmptyState
           title="Nenhuma movimentação nesta situação"
-          description="Assim que a tropa registrar depósitos ou saques, eles aparecem aqui para análise."
+          description="Assim que os afiliados registrarem depósitos ou saques, eles aparecem aqui para análise."
         />
       ) : (
         <div className="space-y-3">

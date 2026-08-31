@@ -1,4 +1,4 @@
-# Tropa Bets — Gestão coletiva de apostas esportivas
+# Peçanha Affiliates — Gestão coletiva de apostas esportivas
 
 Aplicação web full-stack para um grupo de amigos acompanhar **depósitos, saques e comprovantes**
 em 7 casas de aposta, com **login exclusivo pelo Google**, **aprovação manual de novos membros**
@@ -57,21 +57,21 @@ e **painel administrativo**.
 Se você recebeu o `.zip`:
 
 ```bash
-unzip tropa-bets.zip -d tropa-bets
-cd tropa-bets
+unzip pecanha-affiliates.zip -d pecanha-affiliates
+cd pecanha-affiliates
 ```
 
 Se você clonou do Git:
 
 ```bash
-git clone <url-do-repositorio> tropa-bets
-cd tropa-bets
+git clone <url-do-repositorio> pecanha-affiliates
+cd pecanha-affiliates
 ```
 
 Estrutura que você deve ver:
 
 ```
-tropa-bets/
+pecanha-affiliates/
 ├── src/                 # código da aplicação (models, services, controllers, views)
 ├── supabase/schema.sql  # script de inicialização do banco
 ├── docs/                # imagens do README
@@ -87,7 +87,7 @@ tropa-bets/
 1. Acesse https://supabase.com e clique em **Start your project** / faça login.
 2. No dashboard, clique em **New project**.
 3. Preencha:
-   - **Name:** `tropa-bets` (ou o nome que preferir);
+   - **Name:** `pecanha-affiliates` (ou o nome que preferir);
    - **Database Password:** gere uma senha forte e **guarde-a** (você não precisará dela na
      aplicação, mas ela é necessária para acessar o banco por fora);
    - **Region:** escolha a mais próxima (ex.: `South America (São Paulo)`);
@@ -143,7 +143,7 @@ Aqui você gera o **Client ID** e o **Client Secret** que o Supabase usa para o 
 
 1. Acesse https://console.cloud.google.com
 2. Na barra do topo, clique no seletor de projetos → **Novo projeto**.
-3. Nome: `tropa-bets` → **Criar** → selecione o projeto recém-criado.
+3. Nome: `pecanha-affiliates` → **Criar** → selecione o projeto recém-criado.
 
 ### 5.2. Configurar a tela de consentimento
 
@@ -151,7 +151,7 @@ Aqui você gera o **Client ID** e o **Client Secret** que o Supabase usa para o 
    (*OAuth consent screen*).
 2. **User type:** escolha **Externo** → **Criar**.
 3. Preencha os campos obrigatórios:
-   - **Nome do app:** `Tropa Bets`
+   - **Nome do app:** `Peçanha Affiliates`
    - **E-mail para suporte do usuário:** seu e-mail
    - **Dados de contato do desenvolvedor:** seu e-mail
 4. **Salvar e continuar**.
@@ -170,7 +170,7 @@ Aqui você gera o **Client ID** e o **Client Secret** que o Supabase usa para o 
 1. Menu lateral → **APIs e serviços** → **Credenciais**.
 2. **+ Criar credenciais** → **ID do cliente OAuth**.
 3. **Tipo de aplicativo:** **Aplicativo da Web**.
-4. **Nome:** `Tropa Bets Web`.
+4. **Nome:** `Peçanha Affiliates Web`.
 5. Em **URIs de redirecionamento autorizados**, clique em **+ Adicionar URI** e cole:
 
    ```
@@ -371,7 +371,7 @@ Consolidado **por usuário**, ordenado pela comissão acumulada.
   tem e quantas estão em análise.
 - Ao abrir um usuário, aparecem todas as movimentações dele com o campo **Comissão (R$)** e
   uma observação opcional. O valor é **digitado à mão** — não há taxa nem cálculo automático.
-- No topo, a soma das comissões de toda a tropa.
+- No topo, a soma das comissões de todos os afiliados.
 
 ### Aba 4 — Solicitações de acesso
 Lista cada usuário pendente com **foto, nome, e-mail e data da solicitação**.
@@ -433,7 +433,7 @@ Se ainda não estiver no GitHub:
 ```bash
 git init                       # se o projeto não for um repositório ainda
 git add .
-git commit -m "Tropa Bets"
+git commit -m "Peçanha Affiliates"
 git branch -M main
 git remote add origin https://github.com/<seu-usuario>/<seu-repo>.git
 git push -u origin main
@@ -474,7 +474,7 @@ A Vercel não reconheceu o projeto como Next.js e procurou um site estático. Co
    desligado). Para Next.js a saída é `.next`, gerada automaticamente — nunca `public`.
 3. **Settings → Build and Deployment → Root Directory**: precisa apontar para a pasta que
    contém o `package.json`. Se você subiu o `.zip` já descompactado dentro de uma subpasta
-   (ex.: `tropa-bets/`), informe essa subpasta aqui.
+   (ex.: `pecanha-affiliates/`), informe essa subpasta aqui.
 4. **Redeploy**.
 
 O projeto já inclui um `vercel.json` fixando `"framework": "nextjs"`, o que evita esse

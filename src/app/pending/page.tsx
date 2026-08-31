@@ -6,7 +6,7 @@ import { ProfileRules } from '@/models';
 import { authService } from '@/services/auth.service';
 import { formatDateTime } from '@/lib/format';
 
-export const metadata = { title: 'Aguardando aprovação — Tropa Bets' };
+export const metadata = { title: 'Aguardando aprovação — Peçanha Affiliates' };
 
 /** Tela de bloqueio amigavel exibida enquanto o cadastro está pendente. */
 export default async function PendingPage() {

@@ -2,7 +2,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { AdminView } from '@/components/admin/AdminView';
 import { dashboardController } from '@/controllers/dashboard.controller';
 
-export const metadata = { title: 'Administração — Tropa Bets' };
+export const metadata = { title: 'Administração — Peçanha Affiliates' };
 export const dynamic = 'force-dynamic';
 
 /** Página restrita a admins (o controller redireciona quem não tem permissão). */

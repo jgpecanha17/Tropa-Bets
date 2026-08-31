@@ -6,7 +6,7 @@ import { Brand } from '@/components/layout/Brand';
 import { DEFAULT_BOOKMAKERS, ProfileRules } from '@/models';
 import { authService } from '@/services/auth.service';
 
-export const metadata = { title: 'Entrar — Tropa Bets' };
+export const metadata = { title: 'Entrar — Peçanha Affiliates' };
 
 export default async function LoginPage({
   searchParams,
@@ -43,7 +43,7 @@ export default async function LoginPage({
 
         <div className="card space-y-6 p-7">
           <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-bold text-zinc-50">Gestão da tropa</h1>
+            <h1 className="text-2xl font-bold text-zinc-50">Gestão de afiliados</h1>
             <p className="text-sm text-zinc-400">
               Controle os depósitos, saques e comprovantes do grupo em todas as casas de aposta.
             </p>

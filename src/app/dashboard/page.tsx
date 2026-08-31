@@ -2,7 +2,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { DashboardView } from '@/components/dashboard/DashboardView';
 import { dashboardController } from '@/controllers/dashboard.controller';
 
-export const metadata = { title: 'Minhas movimentações — Tropa Bets' };
+export const metadata = { title: 'Minhas movimentações — Peçanha Affiliates' };
 export const dynamic = 'force-dynamic';
 
 /** Página do usuário: o controller resolve dados e permissões, a view apenas renderiza. */

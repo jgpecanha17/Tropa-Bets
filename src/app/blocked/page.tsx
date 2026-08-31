@@ -4,7 +4,7 @@ import { SignOutButton } from '@/components/layout/SignOutButton';
 import { ProfileRules } from '@/models';
 import { authService } from '@/services/auth.service';
 
-export const metadata = { title: 'Acesso negado — Tropa Bets' };
+export const metadata = { title: 'Acesso negado — Peçanha Affiliates' };
 
 /** Tela exibida a usuários recusados/bloqueados pelo administrador. */
 export default async function BlockedPage() {

@@ -1,8 +1,8 @@
 {
-  "name": "tropa-bets",
+  "name": "pecanha-affiliates",
   "version": "1.0.0",
   "private": true,
-  "description": "Gestao coletiva de apostas esportivas \u2014 Next.js (App Router) + Supabase, arquitetura MVC",
+  "description": "Peçanha Affiliates — gestão de depósitos, saques, comprovantes e comissões por casa de aposta (Next.js + Supabase, MVC)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

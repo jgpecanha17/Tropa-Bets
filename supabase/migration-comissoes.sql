@@ -1,5 +1,5 @@
 -- ===========================================================================
---  TROPA BETS — Migração: comissões e análise de comprovantes
+--  PEÇANHA AFFILIATES — Migração: comissões e análise de comprovantes
 --  Rode INTEIRO no Supabase > SQL Editor. Idempotente.
 --  (Quem for criar o banco do zero já tem tudo isso no schema.sql.)
 -- ===========================================================================
