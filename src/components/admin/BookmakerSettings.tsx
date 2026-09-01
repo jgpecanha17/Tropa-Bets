@@ -3,14 +3,25 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@/components/ui/Alert';
+import { formatCurrency } from '@/lib/format';
 import type { Bookmaker } from '@/models';
 
 /** VIEW (admin) — Aba "Configurações & links": link de indicação de cada casa. */
 export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
   const router = useRouter();
-  const [drafts, setDrafts] = useState<Record<string, string>>(() =>
-    Object.fromEntries(bookmakers.map((b) => [b.id, b.affiliate_url ?? ''])),
+  const [drafts, setDrafts] = useState<Record<string, { url: string; minDeposit: string }>>(() =>
+    Object.fromEntries(
+      bookmakers.map((b) => [
+        b.id,
+        { url: b.affiliate_url ?? '', minDeposit: String(Number(b.min_deposit) || 0) },
+      ]),
+    ),
   );
+
+  const draftOf = (id: string) => drafts[id] ?? { url: '', minDeposit: '0' };
+
+  const setDraft = (id: string, patch: Partial<{ url: string; minDeposit: string }>) =>
+    setDrafts((prev) => ({ ...prev, [id]: { ...draftOf(id), ...patch } }));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ tone: 'error' | 'success'; message: string } | null>(null);
 
@@ -21,7 +32,10 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
       const response = await fetch(`/api/admin/bookmakers/${bookmaker.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ affiliate_url: drafts[bookmaker.id]?.trim() ?? '' }),
+        body: JSON.stringify({
+          affiliate_url: draftOf(bookmaker.id).url.trim(),
+          min_deposit: draftOf(bookmaker.id).minDeposit || 0,
+        }),
       });
       const payload = await response.json();
       if (!response.ok) {
@@ -32,7 +46,10 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
           : '';
         throw new Error([payload?.error, details].filter(Boolean).join(' '));
       }
-      setFeedback({ tone: 'success', message: `Link da ${bookmaker.name} salvo com sucesso.` });
+      setFeedback({
+        tone: 'success',
+        message: `Dados da ${bookmaker.name} salvos com sucesso.`,
+      });
       router.refresh();
     } catch (err) {
       setFeedback({
@@ -52,7 +69,8 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          affiliate_url: drafts[bookmaker.id]?.trim() ?? '',
+          affiliate_url: draftOf(bookmaker.id).url.trim(),
+          min_deposit: draftOf(bookmaker.id).minDeposit || 0,
           is_active: !bookmaker.is_active,
         }),
       });
@@ -109,12 +127,27 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
                 type="url"
                 className="input"
                 placeholder="https://..."
-                value={drafts[bookmaker.id] ?? ''}
-                onChange={(event) =>
-                  setDrafts((prev) => ({ ...prev, [bookmaker.id]: event.target.value }))
-                }
+                value={draftOf(bookmaker.id).url}
+                onChange={(event) => setDraft(bookmaker.id, { url: event.target.value })}
               />
             </div>
+
+            <div className="sm:w-44">
+              <label className="label" htmlFor={`min-${bookmaker.id}`}>
+                Aporte mínimo (R$)
+              </label>
+              <input
+                id={`min-${bookmaker.id}`}
+                type="number"
+                step="0.01"
+                min="0"
+                className="input"
+                placeholder="0,00"
+                value={draftOf(bookmaker.id).minDeposit}
+                onChange={(event) => setDraft(bookmaker.id, { minDeposit: event.target.value })}
+              />
+            </div>
+
             <div className="flex items-end">
               <button
                 type="button"
@@ -126,6 +159,15 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
               </button>
             </div>
           </div>
+
+          <p className="text-xs text-zinc-500">
+            Baseline atual: <strong className="text-zinc-300">
+              {Number(bookmaker.min_deposit) > 0
+                ? formatCurrency(Number(bookmaker.min_deposit))
+                : 'não definido'}
+            </strong>{' '}
+            — é o valor mínimo que o afiliado deve depositar no cadastro feito por este link.
+          </p>
         </div>
       ))}
     </div>

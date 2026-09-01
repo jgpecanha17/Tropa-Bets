@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { AffiliateLinkActions } from './AffiliateLinkActions';
 import { OperationGuidelines } from './OperationGuidelines';
 import { SummaryCards } from './SummaryCards';
 import { TransactionForm } from './TransactionForm';
@@ -102,25 +103,17 @@ export function DashboardView({
           <div>
             <h2 className="text-lg font-bold text-zinc-50">{active.name}</h2>
             <p className="text-xs text-zinc-500">
-              {byBookmaker.length} movimentação(oes) registrada(s) nesta casa
+              {byBookmaker.length} movimentação(ões) registrada(s) nesta casa
             </p>
+            {Number(active.min_deposit) > 0 ? (
+              <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-amber-400/10 px-2.5 py-1 text-xs font-semibold text-amber-300">
+                Aporte mínimo: {formatCurrency(Number(active.min_deposit))}
+              </p>
+            ) : null}
           </div>
         </div>
 
-        {active.affiliate_url ? (
-          <a
-            href={active.affiliate_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary"
-          >
-            Abrir cadastro na {active.name} ↗
-          </a>
-        ) : (
-          <span className="rounded-xl border border-dashed border-white/10 px-4 py-2.5 text-xs text-zinc-500">
-            Link de cadastro ainda não configurado pelo administrador
-          </span>
-        )}
+        <AffiliateLinkActions bookmaker={active} />
       </div>
 
       <SummaryCards summary={summary} />

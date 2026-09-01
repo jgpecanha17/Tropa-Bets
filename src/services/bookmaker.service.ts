@@ -45,6 +45,7 @@ export const bookmakerService = {
       .from('bookmakers')
       .update({
         affiliate_url: input.affiliate_url,
+        ...(input.min_deposit !== undefined ? { min_deposit: input.min_deposit } : {}),
         ...(input.is_active !== undefined ? { is_active: input.is_active } : {}),
       })
       .eq('id', id)

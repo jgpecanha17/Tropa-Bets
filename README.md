@@ -127,16 +127,10 @@ comprovantes e o cadastro das 7 casas de aposta.
 
 > O script é **idempotente**: pode ser executado novamente sem apagar dados nem duplicar as casas.
 
-> **Já tinha o banco criado antes da tela de nome e CPF?**
-> Rode `supabase/migration-identidade.sql`: ele acrescenta `legal_name`, `cpf` e
-> `identity_confirmed_at`, o índice único de CPF, a policy que deixa o afiliado atualizar o
-> próprio perfil e o trigger que trava os dados depois da confirmação.
-
-> **Já tinha o banco criado antes das telas de comprovantes e comissões?**
-> Rode `supabase/migration-comissoes.sql`: ele acrescenta as colunas `commission_amount`,
-> `commission_note`, `reviewed_at` e `reviewed_by` e o trigger que impede o usuário comum de
-> alterar a própria comissão ou o status do comprovante. Reexecutar o `schema.sql` inteiro
-> também resolve.
+> **Já tem o banco criado de uma versão anterior?**
+> Rode **`supabase/atualizar.sql`** — um arquivo só, idempotente, que traz o banco para a
+> versão atual: grants das tabelas, colunas de comissão e revisão de comprovantes, nome
+> completo/CPF com os triggers de proteção, o aporte mínimo por casa e o backfill de perfis.
 
 ---
 
@@ -408,7 +402,10 @@ Tabela com todos os usuários, **nome completo e CPF**, status atual e data de e
 ### Aba 6 — Casas & links
 Para cada uma das 7 casas:
 - Campo **Link de indicação / cadastro** → cole a URL de afiliado e clique em **Salvar**.
-  Esse link vira o botão que os usuários veem no topo da aba daquela casa.
+  Esse link vira os botões que os usuários veem no topo da aba daquela casa.
+- Campo **Aporte mínimo (R$)** → a *baseline* daquele link: o valor mínimo que o afiliado
+  precisa depositar no cadastro. Aparece para o usuário e dispara um aviso quando ele lança
+  um depósito abaixo disso.
 - Botão **Desativar/Ativar** → esconde ou mostra a casa no dashboard dos usuários.
 
 > Faça isso logo no começo: enquanto o link não estiver cadastrado, o usuário vê a mensagem
@@ -422,12 +419,17 @@ Em **/dashboard** (liberado após informar nome completo e CPF):
 
 1. **Abas por casa de aposta** — clique em Betano, Betfair, Betnacional, EsportivaBet,
    Novibet, Sportingbet ou Stake. O número ao lado é a quantidade de lançamentos naquela casa.
-2. **Cabeçalho da aba** — nome da casa e o botão **Abrir cadastro na …** (link de afiliado).
+2. **Cabeçalho da aba** — nome da casa, a etiqueta **Aporte mínimo** (quando o admin
+   definiu uma baseline) e três ações para o link de afiliado:
+   **Abrir cadastro** (nova aba), **Copiar link** (área de transferência) e
+   **Compartilhar link** (folha nativa do celular; no desktop, sem suporte, copia o link e
+   avisa).
 3. **Cards de totais** — total depositado, total sacado, resultado (saques − depósitos) e
    número de lançamentos **daquela casa**.
 4. **Nova movimentação** — preencha:
    - **Tipo:** Depósito ou Saque;
-   - **Valor (R$)**;
+   - **Valor (R$)** — mostra o aporte mínimo da casa; se o depósito ficar abaixo dele, um
+     aviso aparece antes de salvar (avisa, não bloqueia);
    - **Data** (não permite data futura);
    - **Comprovante** (opcional): PNG, JPG, WEBP, HEIC ou PDF, até 5 MB;
    - **Observação** (opcional, até 280 caracteres).
@@ -616,6 +618,7 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `id` | uuid (PK) | |
 | `slug`, `name` | text | fixos (seed das 7 casas) |
 | `affiliate_url` | text | editado pelo admin |
+| `min_deposit` | numeric(12,2) | aporte mínimo (baseline) exigido no cadastro por este link |
 | `brand_color`, `sort_order`, `is_active` | text / int / bool | aparência e ordenação |
 
 **`transactions`**

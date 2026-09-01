@@ -60,6 +60,8 @@ create table if not exists public.bookmakers (
   name          text not null,
   affiliate_url text,
   brand_color   text,
+  -- Aporte mínimo (baseline) exigido para o cadastro feito por este link.
+  min_deposit   numeric(12, 2) not null default 0 check (min_deposit >= 0),
   sort_order    integer not null default 0,
   is_active     boolean not null default true,
   created_at    timestamptz not null default now(),

@@ -30,6 +30,7 @@ export type BookmakerRow = {
   name: string;
   affiliate_url: string | null;
   brand_color: string | null;
+  min_deposit: number;
   sort_order: number;
   is_active: boolean;
   created_at: string;
@@ -76,6 +77,7 @@ export type BookmakerInsert = {
   name: string;
   affiliate_url?: string | null;
   brand_color?: string | null;
+  min_deposit?: number;
   sort_order?: number;
   is_active?: boolean;
   created_at?: string;
