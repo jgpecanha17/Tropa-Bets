@@ -26,6 +26,7 @@ export default async function LoginPage({
   if (ctx) {
     if (ProfileRules.isRejected(ctx.profile)) redirect('/blocked');
     if (!ProfileRules.isApproved(ctx.profile)) redirect('/pending');
+    if (!ProfileRules.hasIdentity(ctx.profile)) redirect('/identificacao');
     redirect(safeRedirect);
   }
 

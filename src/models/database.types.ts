@@ -15,6 +15,9 @@ export type ProfileRow = {
   avatar_url: string | null;
   role: UserRole;
   status: UserStatus;
+  legal_name: string | null;
+  cpf: string | null;
+  identity_confirmed_at: string | null;
   approved_at: string | null;
   approved_by: string | null;
   created_at: string;
@@ -58,6 +61,9 @@ export type ProfileInsert = {
   avatar_url?: string | null;
   role?: UserRole;
   status?: UserStatus;
+  legal_name?: string | null;
+  cpf?: string | null;
+  identity_confirmed_at?: string | null;
   approved_at?: string | null;
   approved_by?: string | null;
   created_at?: string;

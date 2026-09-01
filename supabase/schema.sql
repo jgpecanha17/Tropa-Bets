@@ -35,6 +35,10 @@ create table if not exists public.profiles (
   avatar_url   text,
   role         public.user_role   not null default 'user',
   status       public.user_status not null default 'pending_approval',
+  -- Preenchidos pelo próprio afiliado uma única vez; depois só o admin altera.
+  legal_name            text,
+  cpf                   text,
+  identity_confirmed_at timestamptz,
   approved_at  timestamptz,
   approved_by  uuid references public.profiles (id) on delete set null,
   created_at   timestamptz not null default now(),
@@ -45,6 +49,7 @@ comment on table public.profiles is 'Perfil da aplicação, espelha auth.users e
 
 create index if not exists profiles_status_idx on public.profiles (status);
 create index if not exists profiles_role_idx   on public.profiles (role);
+create unique index if not exists profiles_cpf_key on public.profiles (cpf) where cpf is not null;
 
 -- ---------------------------------------------------------------------------
 -- 3. TABELA: bookmakers (casas de aposta + link de afiliado)
@@ -259,6 +264,43 @@ create policy "profiles_select_admin" on public.profiles
 -- Somente admin altera role/status. O próprio usuário não se aprova.
 create policy "profiles_update_admin" on public.profiles
   for update using (public.is_admin()) with check (public.is_admin());
+
+-- O afiliado atualiza o próprio perfil (nome/CPF); o trigger abaixo limita o
+-- que pode ser alterado e trava os dados depois de confirmados.
+drop policy if exists "profiles_update_own" on public.profiles;
+create policy "profiles_update_own" on public.profiles
+  for update using (id = auth.uid()) with check (id = auth.uid());
+
+create or replace function public.guard_profile_self_update()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is not null and not public.is_admin() then
+    if new.role        is distinct from old.role
+       or new.status      is distinct from old.status
+       or new.approved_at is distinct from old.approved_at
+       or new.approved_by is distinct from old.approved_by then
+      raise exception 'Apenas administradores podem alterar permissão ou status.';
+    end if;
+
+    if old.identity_confirmed_at is not null
+       and (new.legal_name            is distinct from old.legal_name
+            or new.cpf                is distinct from old.cpf
+            or new.identity_confirmed_at is distinct from old.identity_confirmed_at) then
+      raise exception 'Nome completo e CPF já foram confirmados. Solicite a alteração ao administrador.';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_guard_self_update on public.profiles;
+create trigger profiles_guard_self_update
+  before update on public.profiles
+  for each row execute function public.guard_profile_self_update();
 
 -- bookmakers ----------------------------------------------------------------
 drop policy if exists "bookmakers_select_authenticated" on public.bookmakers;

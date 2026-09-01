@@ -112,7 +112,7 @@ comprovantes e o cadastro das 7 casas de aposta.
 
 | Item | Descrição |
 | --- | --- |
-| Tabela `profiles` | Perfil do usuário: e-mail, nome, foto, `role` (`user`/`admin`) e `status` (`pending_approval`/`approved`/`rejected`) |
+| Tabela `profiles` | Perfil do usuário: e-mail, nome, foto, `role` (`user`/`admin`), `status` (`pending_approval`/`approved`/`rejected`), nome completo e CPF |
 | Tabela `bookmakers` | As 7 casas de aposta e o link de afiliado de cada uma |
 | Tabela `transactions` | Movimentações: tipo (depósito/saque), valor, data, comprovante e observação |
 | Trigger `on_auth_user_created` | Cria o perfil automaticamente no primeiro login. **O primeiro usuário do sistema vira `admin` aprovado**; os demais entram como pendentes |
@@ -126,6 +126,11 @@ comprovantes e o cadastro das 7 casas de aposta.
 (com 7 linhas) e `transactions`. Em **Storage** deve existir o bucket `receipts`.
 
 > O script é **idempotente**: pode ser executado novamente sem apagar dados nem duplicar as casas.
+
+> **Já tinha o banco criado antes da tela de nome e CPF?**
+> Rode `supabase/migration-identidade.sql`: ele acrescenta `legal_name`, `cpf` e
+> `identity_confirmed_at`, o índice único de CPF, a policy que deixa o afiliado atualizar o
+> próprio perfil e o trigger que trava os dados depois da confirmação.
 
 > **Já tinha o banco criado antes das telas de comprovantes e comissões?**
 > Rode `supabase/migration-comissoes.sql`: ele acrescenta as colunas `commission_amount`,
@@ -325,6 +330,19 @@ update public.profiles
 
 Depois recarregue a aplicação.
 
+### Nome completo e CPF (primeiro acesso do afiliado)
+
+Assim que é **aprovado**, o afiliado cai em **`/identificacao`** antes de ver o painel:
+
+1. Preenche **nome completo** e **CPF** (com máscara e validação dos dígitos verificadores).
+2. Vê uma **tela de conferência** com os dados e o aviso de que o envio é definitivo.
+3. Confirma — e só então o painel é liberado.
+
+O envio acontece **uma única vez**. Depois disso o próprio afiliado não consegue mais alterar:
+a trava está no banco (trigger `guard_profile_self_update`), então vale também para quem tentar
+chamar a API diretamente. Para corrigir, o administrador edita em **/admin → Gerenciamento de
+usuários → Editar dados**. O CPF é único: dois afiliados não podem cadastrar o mesmo.
+
 ### Já tinha logado antes de rodar o `schema.sql`?
 
 Nesse caso a conta existe em `auth.users` mas ficou **sem registro** em `public.profiles` —
@@ -379,7 +397,9 @@ Lista cada usuário pendente com **foto, nome, e-mail e data da solicitação**.
 - **Recusar** → status vira `rejected`; a pessoa vê a tela "Acesso não liberado".
 
 ### Aba 5 — Gerenciamento de usuários
-Tabela com todos os usuários, status atual e data de entrada.
+Tabela com todos os usuários, **nome completo e CPF**, status atual e data de entrada.
+- **Editar dados** abre os campos de nome e CPF na própria linha — é o único caminho para
+  corrigir o que o afiliado informou (ele não consegue alterar depois de confirmar).
 - Menu de **Permissão** para alternar entre `Usuário` e `Administrador`.
 - Botões **Aprovar** / **Bloquear** para mudar o status a qualquer momento.
 - Proteções: você **não** pode alterar o próprio status/permissão e o sistema nunca fica
@@ -398,7 +418,7 @@ Para cada uma das 7 casas:
 
 ## 12. Usando o painel do usuário
 
-Em **/dashboard**:
+Em **/dashboard** (liberado após informar nome completo e CPF):
 
 1. **Abas por casa de aposta** — clique em Betano, Betfair, Betnacional, EsportivaBet,
    Novibet, Sportingbet ou Stake. O número ao lado é a quantidade de lançamentos naquela casa.
@@ -561,6 +581,7 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `POST` | `/api/transactions` | Cria movimentação (multipart, com comprovante) |
 | `DELETE` | `/api/transactions/:id` | Exclui a movimentação e o comprovante |
 | `GET` | `/api/transactions/:id/receipt` | Devolve URL assinada do comprovante |
+| `POST` | `/api/profile/identity` | Grava nome completo e CPF do próprio afiliado (uma vez) |
 | `GET` | `/api/admin/transactions` | Lista tudo de todos (`?userId=&bookmakerId=&receiptStatus=`) |
 | `PATCH` | `/api/admin/transactions/:id` | Aprova/recusa o comprovante e lança a comissão |
 | `GET` | `/api/admin/users` | Lista usuários (`?status=pending_approval` filtra pendentes) |
@@ -569,7 +590,7 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `PATCH` | `/api/admin/bookmakers/:id` | Salva link de afiliado / ativa / desativa |
 
 **Telas:** `/login` · `/pending` (aguardando aprovação) · `/blocked` (recusado) ·
-`/dashboard` · `/admin`.
+`/identificacao` (nome e CPF, uma única vez) · `/dashboard` · `/admin`.
 
 ---
 
@@ -582,6 +603,9 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `id` | uuid (PK) | referencia `auth.users` |
 | `email`, `full_name`, `avatar_url` | text | vêm do Google |
 | `role` | `user` \| `admin` | permissão |
+| `legal_name` | text | nome completo informado pelo afiliado |
+| `cpf` | text | CPF só com dígitos, único entre os afiliados |
+| `identity_confirmed_at` | timestamptz | quando os dados foram confirmados (trava a edição) |
 | `status` | `pending_approval` \| `approved` \| `rejected` | controle de acesso |
 | `approved_at`, `approved_by` | timestamptz / uuid | auditoria da aprovação |
 

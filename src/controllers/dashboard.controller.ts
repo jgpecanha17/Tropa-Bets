@@ -23,6 +23,7 @@ export const dashboardController = {
     if (!ctx) redirect('/login');
     if (ProfileRules.isRejected(ctx.profile)) redirect('/blocked');
     if (!ProfileRules.isApproved(ctx.profile)) redirect('/pending');
+    if (!ProfileRules.hasIdentity(ctx.profile)) redirect('/identificacao');
 
     const [bookmakers, transactions] = await Promise.all([
       bookmakerService.listActive(),
@@ -38,6 +39,7 @@ export const dashboardController = {
     if (!ctx) redirect('/login');
     if (ProfileRules.isRejected(ctx.profile)) redirect('/blocked');
     if (!ProfileRules.isApproved(ctx.profile)) redirect('/pending');
+    if (!ProfileRules.hasIdentity(ctx.profile)) redirect('/identificacao');
     if (!ProfileRules.isAdmin(ctx.profile)) redirect('/dashboard');
 
     const [users, bookmakers, transactions] = await Promise.all([
