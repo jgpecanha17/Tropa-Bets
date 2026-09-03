@@ -24,10 +24,7 @@ export function UserStatusBadge({ status }: { status: UserStatus }) {
   return <span className={cn('badge', USER_TONES[status])}>{STATUS_LABEL[status]}</span>;
 }
 
-/** VIEW — Etiqueta de status do comprovante. */
-export function ReceiptBadge({ status, hasReceipt }: { status: ReceiptStatus; hasReceipt: boolean }) {
-  if (!hasReceipt) {
-    return <span className="badge bg-white/5 text-zinc-400">Sem comprovante</span>;
-  }
+/** VIEW — Etiqueta de validação do lançamento pelo administrador. */
+export function ReviewBadge({ status }: { status: ReceiptStatus }) {
   return <span className={cn('badge', RECEIPT_TONES[status])}>{RECEIPT_LABEL[status]}</span>;
 }

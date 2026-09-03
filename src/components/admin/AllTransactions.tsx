@@ -3,8 +3,9 @@
 import { Fragment, useMemo, useState } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ReceiptBadge } from '@/components/ui/StatusBadge';
+import { ReviewBadge } from '@/components/ui/StatusBadge';
 import { ReviewControls } from './ReviewControls';
+import { formatCPF } from '@/lib/cpf';
 import { cn, formatCurrency, formatDate } from '@/lib/format';
 import {
   TYPE_LABEL,
@@ -112,7 +113,7 @@ export function AllTransactions({
 
         <div>
           <label className="label" htmlFor="filter-status">
-            Comprovante
+            Status da análise
           </label>
           <select
             id="filter-status"
@@ -151,16 +152,17 @@ export function AllTransactions({
         />
       ) : (
         <div className="card overflow-x-auto p-0">
-          <table className="w-full min-w-[900px] border-collapse">
+          <table className="w-full min-w-[1100px] border-collapse">
             <thead className="border-b border-white/5">
               <tr>
-                <th className="th">Usuário</th>
+                <th className="th">Afiliado</th>
+                <th className="th">Titular da conta</th>
                 <th className="th">Casa</th>
                 <th className="th">Data</th>
                 <th className="th">Tipo</th>
                 <th className="th">Valor</th>
                 <th className="th">Comissão</th>
-                <th className="th">Comprovante</th>
+                <th className="th">Status</th>
                 <th className="th text-right">Revisar</th>
               </tr>
             </thead>
@@ -179,6 +181,17 @@ export function AllTransactions({
                         <span className="max-w-[160px] truncate">
                           {tx.owner?.full_name ?? tx.owner?.email ?? '—'}
                         </span>
+                      </div>
+                    </td>
+                    <td className="td">
+                      <div className="min-w-[150px]">
+                        <p className="truncate text-zinc-200">
+                          {tx.account_holder_name ?? '—'}
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          {formatCPF(tx.account_holder_cpf)}
+                          {tx.account_holder_is_self ? ' · próprio' : ' · terceiro'}
+                        </p>
                       </div>
                     </td>
                     <td className="td text-zinc-400">{tx.bookmaker?.name ?? '—'}</td>
@@ -203,7 +216,7 @@ export function AllTransactions({
                       {formatCurrency(Number(tx.commission_amount))}
                     </td>
                     <td className="td">
-                      <ReceiptBadge status={tx.receipt_status} hasReceipt={Boolean(tx.receipt_path)} />
+                      <ReviewBadge status={tx.receipt_status} />
                     </td>
                     <td className="td text-right">
                       <button
@@ -217,7 +230,7 @@ export function AllTransactions({
                   </tr>
                   {openId === tx.id ? (
                     <tr className="bg-white/[0.02]">
-                      <td className="td" colSpan={8}>
+                      <td className="td" colSpan={9}>
                         <ReviewControls transaction={tx} />
                       </td>
                     </tr>

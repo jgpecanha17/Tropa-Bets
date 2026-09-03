@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ReceiptBadge } from '@/components/ui/StatusBadge';
+import { ReviewBadge } from '@/components/ui/StatusBadge';
+import { formatCPF } from '@/lib/cpf';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { TYPE_LABEL, type TransactionWithBookmaker } from '@/models';
 
@@ -19,10 +20,10 @@ export function TransactionTable({ transactions }: { transactions: TransactionWi
     try {
       const response = await fetch(`/api/transactions/${id}/receipt`);
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload?.error ?? 'Comprovante indisponível.');
+      if (!response.ok) throw new Error(payload?.error ?? 'Anexo indisponível.');
       window.open(payload.data.url as string, '_blank', 'noopener,noreferrer');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Comprovante indisponível.');
+      setError(err instanceof Error ? err.message : 'Anexo indisponível.');
     } finally {
       setBusyId(null);
     }
@@ -60,14 +61,15 @@ export function TransactionTable({ transactions }: { transactions: TransactionWi
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
 
       <div className="card overflow-x-auto p-0">
-        <table className="w-full min-w-[820px] border-collapse">
+        <table className="w-full min-w-[980px] border-collapse">
           <thead className="border-b border-white/5">
             <tr>
               <th className="th">Data</th>
               <th className="th">Tipo</th>
               <th className="th">Valor</th>
+              <th className="th">Titular da conta</th>
               <th className="th">Comissão</th>
-              <th className="th">Comprovante</th>
+              <th className="th">Status</th>
               <th className="th">Observação</th>
               <th className="th text-right">Ações</th>
             </tr>
@@ -90,6 +92,15 @@ export function TransactionTable({ transactions }: { transactions: TransactionWi
                 <td className="td whitespace-nowrap font-semibold">
                   {tx.type === 'deposit' ? '-' : '+'} {formatCurrency(Number(tx.amount))}
                 </td>
+                <td className="td">
+                  <div className="min-w-[150px]">
+                    <p className="truncate text-zinc-200">{tx.account_holder_name ?? '—'}</p>
+                    <p className="text-xs text-zinc-500">
+                      {formatCPF(tx.account_holder_cpf)}
+                      {tx.account_holder_is_self ? ' · sua conta' : ' · de terceiro'}
+                    </p>
+                  </div>
+                </td>
                 <td className="td whitespace-nowrap">
                   {Number(tx.commission_amount) > 0 ? (
                     <span className="font-semibold text-lime" title={tx.commission_note ?? undefined}>
@@ -100,11 +111,12 @@ export function TransactionTable({ transactions }: { transactions: TransactionWi
                   )}
                 </td>
                 <td className="td">
-                  <ReceiptBadge status={tx.receipt_status} hasReceipt={Boolean(tx.receipt_path)} />
+                  <ReviewBadge status={tx.receipt_status} />
                 </td>
                 <td className="td max-w-[240px] truncate text-zinc-400">{tx.notes ?? '—'}</td>
                 <td className="td">
                   <div className="flex justify-end gap-2">
+                    {/* Anexo antigo: novos lançamentos não têm comprovante. */}
                     {tx.receipt_path ? (
                       <button
                         type="button"
@@ -112,7 +124,7 @@ export function TransactionTable({ transactions }: { transactions: TransactionWi
                         disabled={busyId === tx.id}
                         className="btn-ghost px-3 py-1.5 text-xs"
                       >
-                        Ver
+                        Anexo
                       </button>
                     ) : null}
                     <button

@@ -121,15 +121,34 @@ create trigger profiles_guard_self_update
 -- 4. BASELINE: aporte mínimo por casa de aposta
 -- ---------------------------------------------------------------------------
 alter table public.bookmakers
-  add column if not exists min_deposit numeric(12, 2) not null default 0;
+  add column if not exists min_deposit      numeric(12, 2) not null default 0,
+  add column if not exists commission_value numeric(12, 2) not null default 0;
 
 do $$ begin
   alter table public.bookmakers
     add constraint bookmakers_min_deposit_non_negative check (min_deposit >= 0);
 exception when duplicate_object then null; end $$;
 
+do $$ begin
+  alter table public.bookmakers
+    add constraint bookmakers_commission_non_negative check (commission_value >= 0);
+exception when duplicate_object then null; end $$;
+
 comment on column public.bookmakers.min_deposit is
   'Aporte mínimo (baseline) exigido no cadastro feito pelo link desta casa.';
+comment on column public.bookmakers.commission_value is
+  'Comissão (CPA) que o afiliado ganha por conta criada e validada nesta casa.';
+
+-- ---------------------------------------------------------------------------
+-- 4.1. Titular da conta aberta pelo link (pode ser outra pessoa)
+-- ---------------------------------------------------------------------------
+alter table public.transactions
+  add column if not exists account_holder_name    text,
+  add column if not exists account_holder_cpf     text,
+  add column if not exists account_holder_is_self boolean not null default true;
+
+comment on column public.transactions.account_holder_cpf is
+  'CPF do titular da conta na casa de aposta — não precisa ser usuário do sistema.';
 
 -- ---------------------------------------------------------------------------
 -- 5. BACKFILL: perfis de usuários criados antes do trigger existir

@@ -4,7 +4,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Peçanha Affiliates — Gestão de apostas',
   description:
-    'Acompanhamento e gestão coletiva de apostas esportivas: depósitos, saques e comprovantes por casa de aposta.',
+    'Gestão de afiliados: depósitos, saques, contas abertas e comissões por casa de aposta.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidCPF, onlyDigits } from '@/lib/cpf';
 import type { Bookmaker } from './bookmaker.model';
 import type { Profile } from './profile.model';
 import type { ReceiptStatus, TransactionRow, TransactionType } from './database.types';
@@ -7,7 +8,10 @@ export type Transaction = TransactionRow;
 
 /** Transação com a casa de aposta embutida (join usado nas listagens). */
 export type TransactionWithBookmaker = Transaction & {
-  bookmaker: Pick<Bookmaker, 'id' | 'name' | 'slug'> | null;
+  bookmaker: Pick<
+    Bookmaker,
+    'id' | 'name' | 'slug' | 'min_deposit' | 'commission_value'
+  > | null;
 };
 
 /** Transação com casa e dono — usada nas telas administrativas. */
@@ -36,8 +40,10 @@ export const ACCEPTED_RECEIPT_TYPES = [
 ];
 
 /**
- * Entrada do formulario de movimentação.
- * O valor chega como string (input do browser) e e normalizado para número.
+ * Entrada do formulário de movimentação.
+ * O valor chega como string (input do browser) e é normalizado para número.
+ * O titular da conta aberta pelo link pode ser o próprio afiliado ou outra
+ * pessoa — que não precisa ter cadastro no sistema.
  */
 export const createTransactionSchema = z.object({
   bookmaker_id: z.string().uuid('Casa de aposta inválida.'),
@@ -50,6 +56,20 @@ export const createTransactionSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida.')
     .refine((value) => !Number.isNaN(Date.parse(value)), 'Data inválida.'),
+  account_holder_is_self: z.coerce.boolean().default(true),
+  account_holder_name: z
+    .string()
+    .trim()
+    .min(5, 'Informe o nome do titular da conta.')
+    .max(120, 'Nome muito longo.')
+    .refine((name) => name.split(/\s+/).filter(Boolean).length >= 2, {
+      message: 'Informe nome e sobrenome do titular.',
+    }),
+  account_holder_cpf: z
+    .string()
+    .transform(onlyDigits)
+    .refine((cpf) => cpf.length === 11, { message: 'O CPF do titular deve ter 11 dígitos.' })
+    .refine(isValidCPF, { message: 'CPF do titular inválido — confira os números.' }),
   notes: z.string().trim().max(280, 'Observação muito longa.').optional().or(z.literal('')),
 });
 

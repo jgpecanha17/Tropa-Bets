@@ -46,7 +46,7 @@ export default async function LoginPage({
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold text-zinc-50">Gestão de afiliados</h1>
             <p className="text-sm text-zinc-400">
-              Controle os depósitos, saques e comprovantes do grupo em todas as casas de aposta.
+              Controle os depósitos, saques e comissões da operação em todas as casas de aposta.
             </p>
           </div>
 

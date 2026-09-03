@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ReceiptBadge } from '@/components/ui/StatusBadge';
+import { ReviewBadge } from '@/components/ui/StatusBadge';
 import { ReviewControls } from './ReviewControls';
 import { cn, formatCurrency, formatDate } from '@/lib/format';
 import { TYPE_LABEL, type AdminTransaction, type Profile } from '@/models';
@@ -132,10 +132,7 @@ export function CommissionsManager({
                             <strong>{tx.bookmaker?.name ?? '—'}</strong> · {TYPE_LABEL[tx.type]} ·{' '}
                             {formatCurrency(Number(tx.amount))} · {formatDate(tx.occurred_at)}
                           </p>
-                          <ReceiptBadge
-                            status={tx.receipt_status}
-                            hasReceipt={Boolean(tx.receipt_path)}
-                          />
+                          <ReviewBadge status={tx.receipt_status} />
                         </div>
                         <ReviewControls transaction={tx} />
                       </div>

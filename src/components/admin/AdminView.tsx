@@ -30,7 +30,7 @@ export function AdminView({
 
   const tabs: Array<{ key: TabKey; label: string; badge?: number }> = [
     { key: 'overview', label: 'Visão geral', badge: transactions.length },
-    { key: 'receipts', label: 'Comprovantes', badge: pendingReceipts.length },
+    { key: 'receipts', label: 'Análise de lançamentos', badge: pendingReceipts.length },
     { key: 'commissions', label: 'Comissões', badge: users.filter((u) => u.status === 'approved').length },
     { key: 'requests', label: 'Solicitações de acesso', badge: pending.length },
     { key: 'users', label: 'Gerenciamento de usuários', badge: users.length },
@@ -42,8 +42,8 @@ export function AdminView({
       <header className="card">
         <h1 className="text-xl font-bold text-zinc-50">Administração</h1>
         <p className="text-sm text-zinc-400">
-          Analise comprovantes, lance comissões, aprove novos membros e mantenha os links das
-          casas atualizados.
+          Valide os lançamentos, lance comissões, aprove novos membros e mantenha os links,
+          aportes mínimos e comissões das casas atualizados.
         </p>
       </header>
 

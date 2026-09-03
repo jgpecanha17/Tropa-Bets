@@ -62,6 +62,8 @@ create table if not exists public.bookmakers (
   brand_color   text,
   -- Aporte mínimo (baseline) exigido para o cadastro feito por este link.
   min_deposit   numeric(12, 2) not null default 0 check (min_deposit >= 0),
+  -- Quanto o afiliado ganha por conta criada e validada nesta casa (CPA).
+  commission_value numeric(12, 2) not null default 0 check (commission_value >= 0),
   sort_order    integer not null default 0,
   is_active     boolean not null default true,
   created_at    timestamptz not null default now(),
@@ -83,6 +85,11 @@ create table if not exists public.transactions (
   receipt_path  text,
   receipt_status public.receipt_status not null default 'pending',
   notes         text,
+  -- Titular da conta aberta pelo link: pode ser o próprio afiliado ou outra
+  -- pessoa, que não precisa ter cadastro no sistema.
+  account_holder_name    text,
+  account_holder_cpf     text,
+  account_holder_is_self boolean not null default true,
   -- Comissão lançada manualmente pelo administrador ao revisar o comprovante.
   commission_amount numeric(12, 2) not null default 0 check (commission_amount >= 0),
   commission_note   text,

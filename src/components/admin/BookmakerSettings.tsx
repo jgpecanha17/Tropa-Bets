@@ -9,18 +9,25 @@ import type { Bookmaker } from '@/models';
 /** VIEW (admin) — Aba "Configurações & links": link de indicação de cada casa. */
 export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
   const router = useRouter();
-  const [drafts, setDrafts] = useState<Record<string, { url: string; minDeposit: string }>>(() =>
+  type Draft = { url: string; minDeposit: string; commission: string };
+
+  const [drafts, setDrafts] = useState<Record<string, Draft>>(() =>
     Object.fromEntries(
       bookmakers.map((b) => [
         b.id,
-        { url: b.affiliate_url ?? '', minDeposit: String(Number(b.min_deposit) || 0) },
+        {
+          url: b.affiliate_url ?? '',
+          minDeposit: String(Number(b.min_deposit) || 0),
+          commission: String(Number(b.commission_value) || 0),
+        },
       ]),
     ),
   );
 
-  const draftOf = (id: string) => drafts[id] ?? { url: '', minDeposit: '0' };
+  const draftOf = (id: string): Draft =>
+    drafts[id] ?? { url: '', minDeposit: '0', commission: '0' };
 
-  const setDraft = (id: string, patch: Partial<{ url: string; minDeposit: string }>) =>
+  const setDraft = (id: string, patch: Partial<Draft>) =>
     setDrafts((prev) => ({ ...prev, [id]: { ...draftOf(id), ...patch } }));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ tone: 'error' | 'success'; message: string } | null>(null);
@@ -35,6 +42,7 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
         body: JSON.stringify({
           affiliate_url: draftOf(bookmaker.id).url.trim(),
           min_deposit: draftOf(bookmaker.id).minDeposit || 0,
+          commission_value: draftOf(bookmaker.id).commission || 0,
         }),
       });
       const payload = await response.json();
@@ -71,6 +79,7 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
         body: JSON.stringify({
           affiliate_url: draftOf(bookmaker.id).url.trim(),
           min_deposit: draftOf(bookmaker.id).minDeposit || 0,
+          commission_value: draftOf(bookmaker.id).commission || 0,
           is_active: !bookmaker.is_active,
         }),
       });
@@ -132,7 +141,7 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
               />
             </div>
 
-            <div className="sm:w-44">
+            <div className="sm:w-40">
               <label className="label" htmlFor={`min-${bookmaker.id}`}>
                 Aporte mínimo (R$)
               </label>
@@ -145,6 +154,22 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
                 placeholder="0,00"
                 value={draftOf(bookmaker.id).minDeposit}
                 onChange={(event) => setDraft(bookmaker.id, { minDeposit: event.target.value })}
+              />
+            </div>
+
+            <div className="sm:w-40">
+              <label className="label" htmlFor={`commission-${bookmaker.id}`}>
+                Comissão / conta (R$)
+              </label>
+              <input
+                id={`commission-${bookmaker.id}`}
+                type="number"
+                step="0.01"
+                min="0"
+                className="input"
+                placeholder="0,00"
+                value={draftOf(bookmaker.id).commission}
+                onChange={(event) => setDraft(bookmaker.id, { commission: event.target.value })}
               />
             </div>
 
@@ -161,12 +186,19 @@ export function BookmakerSettings({ bookmakers }: { bookmakers: Bookmaker[] }) {
           </div>
 
           <p className="text-xs text-zinc-500">
-            Baseline atual: <strong className="text-zinc-300">
+            Aporte mínimo:{' '}
+            <strong className="text-zinc-300">
               {Number(bookmaker.min_deposit) > 0
                 ? formatCurrency(Number(bookmaker.min_deposit))
                 : 'não definido'}
             </strong>{' '}
-            — é o valor mínimo que o afiliado deve depositar no cadastro feito por este link.
+            (valor que o afiliado deve depositar no cadastro por este link) · Comissão:{' '}
+            <strong className="text-lime">
+              {Number(bookmaker.commission_value) > 0
+                ? formatCurrency(Number(bookmaker.commission_value))
+                : 'não definida'}
+            </strong>{' '}
+            por conta criada e validada.
           </p>
         </div>
       ))}

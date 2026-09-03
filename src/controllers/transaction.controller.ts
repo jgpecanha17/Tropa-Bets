@@ -1,6 +1,5 @@
 import type { NextRequest } from 'next/server';
 import { ok } from '@/lib/http';
-import { BadRequest } from '@/lib/errors';
 import { createTransactionSchema } from '@/models';
 import { authService } from '@/services/auth.service';
 import { transactionService } from '@/services/transaction.service';
@@ -26,25 +25,8 @@ export const transactionController = {
   /** POST /api/transactions  (multipart/form-data — inclui o comprovante) */
   async store(request: NextRequest) {
     const { profile } = await authService.requireApproved();
-
-    const contentType = request.headers.get('content-type') ?? '';
-    if (!contentType.includes('multipart/form-data')) {
-      throw BadRequest('Envie o formulario como multipart/form-data.');
-    }
-
-    const form = await request.formData();
-    const input = createTransactionSchema.parse({
-      bookmaker_id: form.get('bookmaker_id'),
-      type: form.get('type'),
-      amount: form.get('amount'),
-      occurred_at: form.get('occurred_at'),
-      notes: form.get('notes') ?? '',
-    });
-
-    const receiptEntry = form.get('receipt');
-    const receipt = receiptEntry instanceof File ? receiptEntry : null;
-
-    const transaction = await transactionService.create(profile.id, input, receipt);
+    const input = createTransactionSchema.parse(await request.json());
+    const transaction = await transactionService.create(profile.id, input);
     return ok(transaction, 201);
   },
 

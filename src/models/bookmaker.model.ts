@@ -30,6 +30,12 @@ export const updateBookmakerSchema = z.object({
     .min(0, 'O aporte mínimo não pode ser negativo.')
     .max(9_999_999.99, 'Valor acima do limite permitido.')
     .optional(),
+  /** CPA: quanto o afiliado ganha por conta criada e validada nesta casa. */
+  commission_value: z.coerce
+    .number({ message: 'Informe um valor numérico para a comissão.' })
+    .min(0, 'A comissão não pode ser negativa.')
+    .max(9_999_999.99, 'Valor acima do limite permitido.')
+    .optional(),
   is_active: z.boolean().optional(),
 });
 

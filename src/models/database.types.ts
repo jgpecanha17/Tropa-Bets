@@ -31,6 +31,7 @@ export type BookmakerRow = {
   affiliate_url: string | null;
   brand_color: string | null;
   min_deposit: number;
+  commission_value: number;
   sort_order: number;
   is_active: boolean;
   created_at: string;
@@ -47,6 +48,9 @@ export type TransactionRow = {
   receipt_path: string | null;
   receipt_status: ReceiptStatus;
   notes: string | null;
+  account_holder_name: string | null;
+  account_holder_cpf: string | null;
+  account_holder_is_self: boolean;
   commission_amount: number;
   commission_note: string | null;
   reviewed_at: string | null;
@@ -78,6 +82,7 @@ export type BookmakerInsert = {
   affiliate_url?: string | null;
   brand_color?: string | null;
   min_deposit?: number;
+  commission_value?: number;
   sort_order?: number;
   is_active?: boolean;
   created_at?: string;
@@ -94,6 +99,9 @@ export type TransactionInsert = {
   receipt_path?: string | null;
   receipt_status?: ReceiptStatus;
   notes?: string | null;
+  account_holder_name?: string | null;
+  account_holder_cpf?: string | null;
+  account_holder_is_self?: boolean;
   commission_amount?: number;
   commission_note?: string | null;
   reviewed_at?: string | null;

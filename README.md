@@ -118,7 +118,7 @@ comprovantes e o cadastro das 7 casas de aposta.
 | Trigger `on_auth_user_created` | Cria o perfil automaticamente no primeiro login. **O primeiro usuário do sistema vira `admin` aprovado**; os demais entram como pendentes |
 | Funções `is_admin()` / `is_approved()` | Usadas pelas políticas de segurança (RLS) |
 | Políticas de RLS | Cada usuário só enxerga as próprias movimentações; o admin enxerga tudo |
-| Bucket `receipts` | Armazenamento **privado** dos comprovantes (até 5 MB; PNG, JPG, WEBP, HEIC ou PDF) |
+| Bucket `receipts` | Mantido apenas para os anexos antigos — o envio de comprovantes foi removido |
 | Seed | Betano, Betfair, Betnacional, EsportivaBet, Novibet, Sportingbet e Stake |
 | Backfill (passo 11) | Cria o perfil de usuários que já existiam em `auth.users` antes do trigger |
 
@@ -129,8 +129,9 @@ comprovantes e o cadastro das 7 casas de aposta.
 
 > **Já tem o banco criado de uma versão anterior?**
 > Rode **`supabase/atualizar.sql`** — um arquivo só, idempotente, que traz o banco para a
-> versão atual: grants das tabelas, colunas de comissão e revisão de comprovantes, nome
-> completo/CPF com os triggers de proteção, o aporte mínimo por casa e o backfill de perfis.
+> versão atual: grants das tabelas, colunas de comissão e revisão dos lançamentos, nome
+> completo/CPF com os triggers de proteção, aporte mínimo e comissão por casa, o titular da
+> conta em cada movimentação e o backfill de perfis.
 
 ---
 
@@ -368,14 +369,16 @@ Todas as movimentações de **todos os usuários** em uma tabela só.
 - Botão **Revisar** em cada linha abre, ali mesmo, as ações de aprovar/recusar o comprovante
   e o campo de comissão.
 
-### Aba 2 — Comprovantes
-Fila de análise, começando pelos que estão **em análise** (dá para alternar para validados,
+### Aba 2 — Análise de lançamentos
+Fila de validação, começando pelos que estão **em análise** (dá para alternar para validados,
 recusados ou todos).
-- Cada cartão traz foto e nome de quem enviou, casa, data, tipo, valor e a observação.
-- **Ver comprovante** abre o arquivo por um link temporário de 10 minutos.
+- Cada cartão traz foto e nome de quem lançou, casa, data, tipo, valor, observação e o
+  **titular da conta** (nome e CPF, com a marcação se é do próprio afiliado ou de terceiro).
 - **Aprovar**, **Recusar** ou **Voltar para análise** mudam o status; o sistema registra qual
   administrador revisou e quando.
-- No mesmo cartão dá para lançar a **comissão** daquela movimentação.
+- No mesmo cartão dá para lançar a **comissão**, com o atalho para o valor cadastrado na casa.
+- Lançamentos antigos que tinham comprovante anexado mostram o botão **Ver anexo** (link
+  temporário de 10 minutos).
 
 ### Aba 3 — Comissões
 Consolidado **por usuário**, ordenado pela comissão acumulada.
@@ -406,6 +409,10 @@ Para cada uma das 7 casas:
 - Campo **Aporte mínimo (R$)** → a *baseline* daquele link: o valor mínimo que o afiliado
   precisa depositar no cadastro. Aparece para o usuário e dispara um aviso quando ele lança
   um depósito abaixo disso.
+- Campo **Comissão / conta (R$)** → quanto o afiliado ganha por conta criada e validada
+  naquela casa (CPA). Ex.: Betano com aporte mínimo R$ 80 e comissão R$ 60. O valor aparece
+  para o afiliado e vira um atalho na revisão (**Usar R$ 60,00**), mas quem grava a comissão
+  de cada lançamento continua sendo o admin.
 - Botão **Desativar/Ativar** → esconde ou mostra a casa no dashboard dos usuários.
 
 > Faça isso logo no começo: enquanto o link não estiver cadastrado, o usuário vê a mensagem
@@ -419,8 +426,8 @@ Em **/dashboard** (liberado após informar nome completo e CPF):
 
 1. **Abas por casa de aposta** — clique em Betano, Betfair, Betnacional, EsportivaBet,
    Novibet, Sportingbet ou Stake. O número ao lado é a quantidade de lançamentos naquela casa.
-2. **Cabeçalho da aba** — nome da casa, a etiqueta **Aporte mínimo** (quando o admin
-   definiu uma baseline) e três ações para o link de afiliado:
+2. **Cabeçalho da aba** — nome da casa, as etiquetas **Aporte mínimo** e **Comissão por
+   conta** (quando o admin as definiu) e três ações para o link de afiliado:
    **Abrir cadastro** (nova aba), **Copiar link** (área de transferência) e
    **Compartilhar link** (folha nativa do celular; no desktop, sem suporte, copia o link e
    avisa).
@@ -431,12 +438,17 @@ Em **/dashboard** (liberado após informar nome completo e CPF):
    - **Valor (R$)** — mostra o aporte mínimo da casa; se o depósito ficar abaixo dele, um
      aviso aparece antes de salvar (avisa, não bloqueia);
    - **Data** (não permite data futura);
-   - **Comprovante** (opcional): PNG, JPG, WEBP, HEIC ou PDF, até 5 MB;
+   - **Titular da conta na casa** — escolha **Conta no meu nome** (usa o nome e o CPF do
+     próprio cadastro) ou **Conta de outra pessoa** e digite nome completo e CPF. A pessoa
+     **não precisa ter cadastro no sistema**; a comissão continua sendo do afiliado que
+     lançou;
    - **Observação** (opcional, até 280 caracteres).
 
-   Clique em **Registrar movimentação**.
-5. **Histórico** — tabela com data, tipo, valor, **comissão**, status do comprovante e
-   observação. A comissão é lançada pelo administrador; enquanto não houver, aparece `—`.
+   Clique em **Registrar movimentação** — o lançamento entra em análise pelo administrador.
+   Não há mais upload de print: a validação é feita pelos dados informados.
+5. **Histórico** — tabela com data, tipo, valor, **titular da conta**, **comissão**, status
+   da análise e observação. A comissão é lançada pelo administrador; enquanto não houver,
+   aparece `—`.
    O cabeçalho da página mostra a comissão acumulada em todas as casas e os cards trazem o
    total daquela casa.
    - **Ver** → abre o comprovante em nova aba por meio de um link temporário (10 minutos).
@@ -619,6 +631,7 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `slug`, `name` | text | fixos (seed das 7 casas) |
 | `affiliate_url` | text | editado pelo admin |
 | `min_deposit` | numeric(12,2) | aporte mínimo (baseline) exigido no cadastro por este link |
+| `commission_value` | numeric(12,2) | comissão (CPA) por conta criada e validada nesta casa |
 | `brand_color`, `sort_order`, `is_active` | text / int / bool | aparência e ordenação |
 
 **`transactions`**
@@ -630,7 +643,10 @@ app/api/*  →  controllers/*  →  services/*  →  Supabase (RLS)  →  respos
 | `type` | `deposit` \| `withdrawal` | |
 | `amount` | numeric(12,2) | precisa ser > 0 |
 | `occurred_at` | date | data informada |
-| `receipt_path` | text | caminho no bucket `receipts` |
+| `account_holder_name` | text | nome do titular da conta aberta pelo link |
+| `account_holder_cpf` | text | CPF do titular (não precisa ser usuário do sistema) |
+| `account_holder_is_self` | boolean | a conta é do próprio afiliado? |
+| `receipt_path` | text | anexo legado (o upload foi removido) |
 | `receipt_status` | `pending` \| `approved` \| `rejected` | status do comprovante |
 | `notes` | text | observação opcional |
 | `commission_amount` | numeric(12,2) | comissão em R$ lançada pelo admin (padrão 0) |

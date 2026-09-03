@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ReceiptBadge } from '@/components/ui/StatusBadge';
+import { ReviewBadge } from '@/components/ui/StatusBadge';
 import { ReviewControls } from './ReviewControls';
 import { cn, formatCurrency, formatDate } from '@/lib/format';
 import { TYPE_LABEL, type AdminTransaction, type ReceiptStatus } from '@/models';
@@ -16,9 +16,9 @@ const FILTERS: Array<{ key: ReceiptStatus | 'all'; label: string }> = [
 ];
 
 /**
- * VIEW (admin) — Aba "Comprovantes": fila de análise dos depósitos e saques.
- * Cada cartão mostra quem enviou, o valor e o comprovante, com as ações de
- * aprovar/recusar e o lançamento da comissão.
+ * VIEW (admin) — Aba "Análise": fila dos depósitos e saques aguardando
+ * validação. Cada cartão mostra quem lançou, o titular da conta e o valor,
+ * com as ações de aprovar/recusar e o lançamento da comissão.
  */
 export function ReceiptQueue({ transactions }: { transactions: AdminTransaction[] }) {
   const [filter, setFilter] = useState<ReceiptStatus | 'all'>('pending');
@@ -98,7 +98,7 @@ export function ReceiptQueue({ transactions }: { transactions: AdminTransaction[
                   <span className="text-lg font-bold text-zinc-50">
                     {formatCurrency(Number(tx.amount))}
                   </span>
-                  <ReceiptBadge status={tx.receipt_status} hasReceipt={Boolean(tx.receipt_path)} />
+                  <ReviewBadge status={tx.receipt_status} />
                 </div>
               </div>
 
